@@ -1,17 +1,14 @@
-#include "cuda.h"
-#include "conio.h"
-#include <fstream>
-#include <sstream>
+// ela3disokoma.cpp : Defines the entry point for the console application.
+//
+
+#include "stdafx.h"
+#include "stdlib.h"
+#include "math.h"
 #include <iostream>
-#include <assert.h>
-#include "book.h"
-//#include "cpu_anim.h"
-#include <fstream>
-#include <string>
 
-using namespace std;
 
-int main(void) {
+int _tmain(int argc, _TCHAR* argv[])
+{
 	int NX, NY, NZ;
 	NX = 101;
 	NY = 641;
@@ -103,7 +100,7 @@ int main(void) {
 	float *K_x_half = (float*)malloc(sizeof(float)*(NX));
 	float *alpha_x_half = (float*)malloc(sizeof(float)*(NX));
 	float *a_x_half = (float*)malloc(sizeof(float)*(NX));
-	float *b_x_half = (float*)malloc(sizeof(float)*(NX)); 
+	float *b_x_half = (float*)malloc(sizeof(float)*(NX));
 	float *d_y = (float*)malloc(sizeof(float)*(NX));
 	float *K_y = (float*)malloc(sizeof(float)*(NX));
 	float *alpha_y = (float*)malloc(sizeof(float)*(NX));
@@ -113,7 +110,7 @@ int main(void) {
 	float *K_y_half = (float*)malloc(sizeof(float)*(NX));
 	float *alpha_y_half = (float*)malloc(sizeof(float)*(NX));
 	float *a_y_half = (float*)malloc(sizeof(float)*(NX));
-	float *b_y_half = (float*)malloc(sizeof(float)*(NX)); 
+	float *b_y_half = (float*)malloc(sizeof(float)*(NX));
 	float *d_z = (float*)malloc(sizeof(float)*(NX));
 	float *K_z = (float*)malloc(sizeof(float)*(NX));
 	float *alpha_z = (float*)malloc(sizeof(float)*(NX));
@@ -123,7 +120,7 @@ int main(void) {
 	float *K_z_half = (float*)malloc(sizeof(float)*(NX));
 	float *alpha_z_half = (float*)malloc(sizeof(float)*(NX));
 	float *a_z_half = (float*)malloc(sizeof(float)*(NX));
-	float *b_x_half = (float*)malloc(sizeof(float)*(NX));
+	float *b_z_half = (float*)malloc(sizeof(float)*(NX));
 
 	float thickness_PML_x, thickness_PML_y, thickness_PML_z;
 	float xoriginleft, xoriginright, yoriginbottom, yorigintop, zorigintop, zoriginbottom;
@@ -146,7 +143,7 @@ int main(void) {
 	int *iy_rec = (int*)malloc(sizeof(int)*(NREC));
 	float *xrec = (float*)malloc(sizeof(float)*(NREC));
 	float *yrec = (float*)malloc(sizeof(float)*(NREC));
-	
+
 	float *sisvx = (float*)malloc(sizeof(float)*(NSTEP*NREC));
 	float *sisvy = (float*)malloc(sizeof(float)*(NSTEP*NREC));
 
@@ -209,22 +206,24 @@ int main(void) {
 		a_z_half[i] = ZERO;
 	}
 
+	xoriginleft = thickness_PML_x;
+	xoriginright = (NX - 1)*DELTAX - thickness_PML_x;
 	for (int i = 0; i < NX; i++) {
 		xval = DELTAX *float(i - 1);
-		
+
 		//xmin
 		abscissa_in_PML = xoriginleft - xval;
 		if (abscissa_in_PML >= ZERO) {
 			abscissa_normalized = abscissa_in_PML / thickness_PML_x;
-			d_x[i] = d0_x*pow(abscissa_normalized, NPOWER);
-			K_x[i] = 1.0 + (K_MAX_PML - 1.0)* pow(abscissa_normalized, NPOWER);
+			d_x[i] = d0_x*powf(abscissa_normalized, NPOWER);
+			K_x[i] = 1.0 + (K_MAX_PML - 1.0)* powf(abscissa_normalized, NPOWER);
 			alpha_x[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
 		}
 		abscissa_in_PML = xoriginleft - (xval + DELTAX / 2.0);
 		if (abscissa_in_PML >= ZERO) {
 			abscissa_normalized = abscissa_in_PML / thickness_PML_x;
-			d_x_half[i] = d0_x * pow(abscissa_normalized, NPOWER);
-			K_x_half[i] = 1.0 + (K_MAX_PML - 1.0) * pow(abscissa_normalized, NPOWER);
+			d_x_half[i] = d0_x * powf(abscissa_normalized, NPOWER);
+			K_x_half[i] = 1.0 + (K_MAX_PML - 1.0) * powf(abscissa_normalized, NPOWER);
 			alpha_x_half[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
 		}
 
@@ -232,10 +231,369 @@ int main(void) {
 		abscissa_in_PML = xval - xoriginright;
 		if (abscissa_in_PML >= ZERO) {
 			abscissa_normalized = abscissa_in_PML / thickness_PML_x;
-			d_x[i] = d0_x*pow(abscissa_normalized, NPOWER);
-			K_x[i] = 1 + (K_MAX_PML - 1.0)*pow(abscissa_normalized, NPOWER);
+			d_x[i] = d0_x*powf(abscissa_normalized, NPOWER);
+			K_x[i] = 1 + (K_MAX_PML - 1.0)*powf(abscissa_normalized, NPOWER);
 			alpha_x[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
 		}
-		abscissa_in_PML = xval +
+		abscissa_in_PML = xval + DELTAX / 2.0 - xoriginright;
+		if (abscissa_in_PML >= ZERO) {
+			abscissa_normalized = abscissa_in_PML / thickness_PML_x;
+			d_x_half[i] = d0_x*powf(abscissa_normalized, NPOWER);
+			K_x_half[i] = 1.0 + (K_MAX_PML - 1.0)*powf(abscissa_normalized, NPOWER);
+			alpha_x_half[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
+		}
+		//for -5 at the end
+		if (alpha_x[i] < ZERO) { alpha_x[i] = ZERO; };
+		if (alpha_x_half[i] < ZERO) { alpha_x_half[i] = ZERO; }
+		b_x[i] = exp(-(d_x[i] / K_x[i] + alpha_x[i])*DELTAT);
+		b_x_half[i] = exp(-(d_x_half[i] / K_x_half[i] + alpha_x_half[i])*DELTAT);
+		//avoid divide by zero outside PML
+		if (fabs(d_x[i]) > 1.0e-6) { a_x[i] = d_x[i] * (b_x[i] - 1.0) / (K_x[i] * (d_x[i] + K_x[i] * alpha_x[i])); }
+		if (fabs(d_x_half[i]) > 1.0e-6) { a_x_half[i] = d_x_half[i] * (b_x_half[i] - 1.0) / (K_x_half[i] * (d_x_half[i] + K_x_half[i] * alpha_x_half[i])); }
 	}
+
+	yoriginbottom = thickness_PML_y;
+	yorigintop - (NY - 1)*DELTAY - thickness_PML_x;
+	for (int i = 0; i < NY; i++) {
+		yval = DELTAY *float(i - 1);
+
+		//ymin
+		abscissa_in_PML = yoriginbottom - yval;
+		if (abscissa_in_PML >= ZERO) {
+			abscissa_normalized = abscissa_in_PML / thickness_PML_y;
+			d_y[i] = d0_y*powf(abscissa_normalized, NPOWER);
+			K_y[i] = 1.0 + (K_MAX_PML - 1.0)* powf(abscissa_normalized, NPOWER);
+			alpha_y[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
+		}
+		abscissa_in_PML = yoriginbottom - (yval + DELTAY / 2.0);
+		if (abscissa_in_PML >= ZERO) {
+			abscissa_normalized = abscissa_in_PML / thickness_PML_y;
+			d_y_half[i] = d0_y * powf(abscissa_normalized, NPOWER);
+			K_y_half[i] = 1.0 + (K_MAX_PML - 1.0) * powf(abscissa_normalized, NPOWER);
+			alpha_y_half[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
+		}
+
+		//ymax
+		abscissa_in_PML = yval - yorigintop;
+		if (abscissa_in_PML >= ZERO) {
+			abscissa_normalized = abscissa_in_PML / thickness_PML_y;
+			d_y[i] = d0_y*powf(abscissa_normalized, NPOWER);
+			K_y[i] = 1 + (K_MAX_PML - 1.0)*powf(abscissa_normalized, NPOWER);
+			alpha_y[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
+		}
+		abscissa_in_PML = yval + DELTAY / 2.0 - yorigintop;
+		if (abscissa_in_PML >= ZERO) {
+			abscissa_normalized = abscissa_in_PML / thickness_PML_y;
+			d_y_half[i] = d0_y*powf(abscissa_normalized, NPOWER);
+			K_y_half[i] = 1.0 + (K_MAX_PML - 1.0)*powf(abscissa_normalized, NPOWER);
+			alpha_y_half[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
+		}
+		b_y[i] = exp(-(d_y[i] / K_y[i] + alpha_y[i])*DELTAT);
+		b_y_half[i] = exp(-(d_y_half[i] / K_y_half[i] + alpha_y_half[i])*DELTAT);
+		//avoid division by zero outside PML
+		if (fabs(d_y[i]) > 1.0e-6) { a_y[i] = d_y[i] * (b_y[i] - 1.0) / (K_y[i] * (d_y[i] + K_y[i] * alpha_y[i])); }
+		if (fabs(d_y_half[i]) > 1.0e-6) { a_y_half[i] = d_y_half[i] * (b_y_half[i] - 1.0) / (K_y_half[i] * (d_y_half[i] + K_y_half[i] * alpha_y_half[i])); }
+	}
+
+	zoriginbottom = thickness_PML_z;
+	zorigintop - (NZ - 1)*DELTAZ - thickness_PML_z;
+	for (int i = 0; i < NZ; i++) {
+		zval = DELTAZ *float(i - 1);
+
+		//zmin
+		abscissa_in_PML = zoriginbottom - zval;
+		if (abscissa_in_PML >= ZERO) {
+			abscissa_normalized = abscissa_in_PML / thickness_PML_z;
+			d_z[i] = d0_z*powf(abscissa_normalized, NPOWER);
+			K_z[i] = 1.0 + (K_MAX_PML - 1.0)* powf(abscissa_normalized, NPOWER);
+			alpha_z[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
+		}
+		abscissa_in_PML = zoriginbottom - (zval + DELTAZ / 2.0);
+		if (abscissa_in_PML >= ZERO) {
+			abscissa_normalized = abscissa_in_PML / thickness_PML_z;
+			d_z_half[i] = d0_z * powf(abscissa_normalized, NPOWER);
+			K_z_half[i] = 1.0 + (K_MAX_PML - 1.0) * powf(abscissa_normalized, NPOWER);
+			alpha_z_half[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
+		}
+
+		//zmax
+		abscissa_in_PML = zval - zorigintop;
+		if (abscissa_in_PML >= ZERO) {
+			abscissa_normalized = abscissa_in_PML / thickness_PML_z;
+			d_z[i] = d0_z*powf(abscissa_normalized, NPOWER);
+			K_z[i] = 1 + (K_MAX_PML - 1.0)*powf(abscissa_normalized, NPOWER);
+			alpha_z[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
+		}
+		abscissa_in_PML = zval + DELTAZ / 2.0 - zorigintop;
+		if (abscissa_in_PML >= ZERO) {
+			abscissa_normalized = abscissa_in_PML / thickness_PML_z;
+			d_z_half[i] = d0_z*powf(abscissa_normalized, NPOWER);
+			K_z_half[i] = 1.0 + (K_MAX_PML - 1.0)*powf(abscissa_normalized, NPOWER);
+			alpha_z_half[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
+		}
+		b_z[i] = exp(-(d_z[i] / K_z[i] + alpha_z[i])*DELTAT);
+		b_z_half[i] = exp(-(d_z_half[i] / K_z_half[i] + alpha_z_half[i])*DELTAT);
+		//avoid division by zero outside PML
+		if (fabs(d_z[i]) > 1.0e-6) { a_z[i] = d_z[i] * (b_z[i] - 1.0) / (K_z[i] * (d_z[i] + K_z[i] * alpha_z[i])); }
+		if (fabs(d_z_half[i]) > 1.0e-6) { a_z_half[i] = d_z_half[i] * (b_z_half[i] - 1.0) / (K_z_half[i] * (d_z_half[i] + K_z_half[i] * alpha_z_half[i])); }
+	}
+	xspacerec = (xfin - xdeb) / float(NREC - 1);
+	yspacerec = (yfin - ydeb) / float(NREC - 1);
+	for (int i = 0; i < NREC; i++) {
+		xrec[i] = xdeb + float(i)*xspacerec;
+		yrec[i] = ydeb + float(i)*yspacerec;
+	}
+
+	for (int irec = 0; irec < NREC; irec++) {
+		dist = HUGEVAL;
+		for (int j = 0; j < NY; j++) {
+			for (int i = 0; i < NX; i++){
+				distval = sqrtf((DELTAX*float(i) - powf(xrec[irec], 2)) + (DELTAY*float(j) - powf(yrec[irec], 2)));
+				if (distval < dist) {
+					dist = distval;
+					ix_rec[irec] = i;
+					iy_rec[irec] = j;
+				}
+			}
+		}
+	}
+
+	Courant_number = cp * DELTAT * sqrtf(1.0 / powf(DELTAX, 2) + 1.0 / powf(DELTAY, 2) + 1.0 / powf(DELTAZ, 2));
+	if (Courant_number > 1.0) { return 0; }
+
+	for (int k = 0; k < NZ; k++) {
+		for (int j = 0; j < NY; j++) {
+			for (int i = 0; i < NX; i++) {
+				int ijk = i + j*NX + k*NX*NY;
+				vx[ijk] = ZERO;
+				vy[ijk] = ZERO;
+				vz[ijk] = ZERO;
+				sigmaxx[ijk] = ZERO;
+				sigmayy[ijk] = ZERO;
+				sigmazz[ijk] = ZERO;
+				sigmaxy[ijk] = ZERO;
+				sigmaxz[ijk] = ZERO;
+				sigmayz[ijk] = ZERO;
+				memory_dvx_dx[ijk] = ZERO;
+				memory_dvx_dy[ijk] = ZERO;
+				memory_dvx_dz[ijk] = ZERO;
+				memory_dvy_dx[ijk] = ZERO;
+				memory_dvy_dy[ijk] = ZERO;
+				memory_dvy_dz[ijk] = ZERO;
+				memory_dvz_dx[ijk] = ZERO;
+				memory_dvz_dy[ijk] = ZERO;
+				memory_dvz_dz[ijk] = ZERO;
+			}
+		}
+	}
+
+	for (int i = 0; i < NSTEP; i++) {
+		for (int j = 0; j < NREC; j++) {
+			int ij = i + j*NSTEP;
+			sisvx[ij] = ZERO;
+			sisvy[ij] = ZERO;
+		}
+		total_energy[i] = ZERO;
+	}
+
+	for (int it = 0; it < NSTEP; it++){
+		for (int k = 0; k < NZ; k++) {
+			for (int j = 1; j < NY; j++) {
+				for (int i = 0; i < (NZ - 1); i++) {
+					int ijk = i + j*NX + k*NX*NY;
+					int right = ijk + 1;
+					int bottom = ijk - NX;
+					int rear = ijk - NX*NY;
+					value_dvx_dx = (vx[right] - vx[ijk])*ONE_OVER_DELTAX;
+					value_dvy_dy = (vy[ijk] - vy[bottom])*ONE_OVER_DELTAY;
+					value_dvz_dz = (vz[ijk] - vz[rear])*ONE_OVER_DELTAZ;
+
+					memory_dvx_dx[ijk] = b_x_half[i] * memory_dvx_dx[ijk] + a_x_half[i] * value_dvx_dx;
+					memory_dvy_dy[ijk] = b_y[j] * memory_dvy_dy[ijk] + a_y[j] * value_dvy_dy;
+					memory_dvz_dz[ijk] = b_z[k] * memory_dvz_dz[ijk] + a_z[k] * value_dvz_dz;
+
+					value_dvx_dx = value_dvx_dx / K_x_half[i] + memory_dvx_dx[ijk];
+					value_dvy_dy = value_dvy_dy / K_y[j] + memory_dvy_dy[ijk];
+					value_dvz_dz = value_dvz_dz / K_z[k] + memory_dvz_dz[ijk];
+
+					sigmaxx[ijk] = DELTAT_lambdaplus2mu*value_dvx_dx + DELTAT_lambda*(value_dvy_dy + value_dvz_dz) + sigmaxx[ijk];
+					sigmayy[ijk] = DELTAT_lambda*(value_dvx_dx + value_dvz_dz) + DELTAT_lambdaplus2mu*value_dvy_dy + sigmayy[ijk];
+					sigmazz[ijk] = DELTAT_lambda*(value_dvx_dx + value_dvy_dy) + DELTAT_lambdaplus2mu*value_dvz_dz + sigmazz[ijk];
+				}
+			}
+		}
+
+		for (int k = 0; k < NZ; k++) {
+			for (int j = 0; j < NY - 1; j++){
+				for (int i = 1; i < NX; i++) {
+					int ijk = i + j*NX + k*NY*NY;
+					int left = ijk - 1;
+					int top = ijk + NX;
+
+					value_dvy_dx = (vy[ijk] - vy[left])*ONE_OVER_DELTAX;
+					value_dvx_dy = (vx[top] - vx[ijk])*ONE_OVER_DELTAY;
+
+					memory_dvy_dx[ijk] = b_x[i] * memory_dvy_dx[ijk] + a_x[i] * value_dvy_dx;
+					memory_dvx_dy[ijk] = b_y_half[j] * memory_dvx_dy[j] + a_y_half[j] * value_dvx_dy;
+
+					value_dvy_dx = value_dvy_dx / K_x[i] + memory_dvy_dx[ijk];
+					value_dvx_dy = value_dvx_dy / K_y_half[j] + memory_dvx_dy[ijk];
+
+					sigmaxy[ijk] = DELTAT_mu*(value_dvy_dx + value_dvx_dy) + sigmaxy[ijk];
+				}
+			}
+		}
+
+		for (int k = 0; k < NZ - 1; k++) {
+			for (int j = 0; j < NY; j++) {
+				for (int i = 1; i < NX; i++) {
+					int ijk = i + j*NX + k*NX*NY;
+					int left = ijk - 1;
+					int front = ijk + NX*NY;
+
+					value_dvz_dx = (vz[ijk] - vz[left])*ONE_OVER_DELTAX;
+					value_dvx_dz = (vx[front] - vx[ijk])*ONE_OVER_DELTAZ;
+
+					memory_dvz_dx[ijk] = b_x[i] * memory_dvz_dx[ijk] + a_x[i] * value_dvz_dx;
+					memory_dvx_dz[ijk] = b_z_half[k] * memory_dvx_dz[ijk] + a_z_half[k] * value_dvz_dz;
+
+					value_dvz_dx = value_dvz_dx / K_x[i] + memory_dvz_dx[ijk];
+					value_dvx_dz = value_dvx_dz / K_z_half[k] + memory_dvx_dz[ijk];
+
+					sigmaxz[ijk] = DELTAT_mu*(value_dvz_dx + value_dvx_dz) + sigmaxz[ijk];
+				}
+			}
+
+			for (int j = 0; j < NY - 1; j++) {
+				for (int i = 0; i < NX; i++) {
+					int ijk = i + j*NX + k*NX*NY;
+					int top = ijk + NX;
+					int front = ijk + NX*NY;
+
+					value_dvz_dy = (vz[top] - vz[ijk])*ONE_OVER_DELTAY;
+					value_dvy_dz = (vy[front] - vy[ijk])*ONE_OVER_DELTAZ;
+
+					memory_dvz_dy[ijk] = b_y_half[j] * memory_dvz_dy[ijk] + a_y_half[j] * value_dvz_dy;
+					memory_dvy_dz[ijk] = b_z_half[k] * memory_dvy_dz[ijk] + a_z_half[k] * value_dvy_dz;
+
+					value_dvz_dy = value_dvz_dy / K_y_half[j] + memory_dvz_dy[ijk];
+					value_dvy_dz = value_dvy_dz / K_z_half[k] + memory_dvz_dy[ijk];
+
+					sigmayz[ijk] = DELTAT_mu*(value_dvz_dy + value_dvy_dz) + sigmayz[ijk];
+				}
+			}
+		}
+
+		for (int k = 1; k < NZ; k++) {
+			for (int j = 1; j < NY; j++) {
+				for (int i = 1; i < NX; i++) {
+					int ijk = i + j*NX + k*NX*NY;
+					int left = ijk - 1;
+					int bottom = ijk - NX;
+					int rear = ijk - NX*NY;
+
+					value_dsigmaxx_dx = (sigmaxx[ijk] - sigmaxx[left])*ONE_OVER_DELTAX;
+					value_dsigmaxy_dy = (sigmaxy[ijk] - sigmaxy[bottom])*ONE_OVER_DELTAY;
+					value_dsigmaxz_dz = (sigmaxz[ijk] - sigmaxz[rear])*ONE_OVER_DELTAZ;
+
+					memory_dsigmaxx_dx[ijk] = b_x[i] * memory_dsigmaxx_dx[ijk] + a_x[i] * value_dsigmaxx_dx;
+					memory_dsigmaxy_dx[ijk] = b_y[j] * memory_dsigmaxx_dx[ijk] + a_y[j] * value_dsigmaxy_dy;
+					memory_dsigmaxz_dz[ijk] = b_z[k] * memory_dsigmaxz_dz[ijk] + a_z[k] * value_dsigmaxz_dz;
+
+					value_dsigmaxx_dx = value_dsigmaxx_dx / K_x[i] + memory_dsigmaxx_dx[ijk];
+					value_dsigmaxy_dy = value_dsigmaxy_dy / K_y[j] + memory_dsigmaxy_dy[ijk];
+					value_dsigmaxz_dz = value_dsigmaxz_dz / K_z[k] + memory_dsigmaxz_dz[ijk];
+
+					vx[ijk] = DELTAT_over_rho*(value_dsigmaxx_dx + value_dsigmaxy_dy + value_dsigmaxz_dz) + vx[ijk];
+				}
+			}
+
+			for (int j = 0; j < NY - 1; j++) {
+				for (int i = 0; i < NX - 1; i++) {
+					int ijk = i + j*NX + k*NX*NY;
+					int right = ijk + 1;
+					int top = ijk + NX;
+					int rear = ijk - NX*NY;
+
+					value_dsigmaxy_dx = (sigmaxy[right] - sigmaxy[ijk])*ONE_OVER_DELTAX;
+					value_dsigmayy_dy = (sigmayy[top] - sigmayy[ijk])*ONE_OVER_DELTAY;
+					value_dsigmayz_dz = (sigmayz[ijk] - sigmayz[rear])*ONE_OVER_DELTAZ;
+
+					memory_dsigmaxy_dx[ijk] = b_x_half[i] * memory_dsigmaxy_dx[ijk] + a_x_half[i] * value_dsigmaxy_dx;
+					memory_dsigmayy_dy[ijk] = b_y_half[j] * memory_dsigmayy_dy[ijk] + a_y_half[j] * value_dsigmayy_dy;
+					memory_dsigmayz_dz[ijk] = b_z[k] * memory_dsigmayz_dz[ijk] + a_z[k] * value_dsigmayz_dz;
+
+					value_dsigmaxy_dx = value_dsigmaxx_dx / K_x_half[i] + memory_dsigmaxy_dx[ijk];
+					value_dsigmayy_dy = value_dsigmayy_dy / K_y_half[j] + memory_dsigmayy_dy[ijk];
+					value_dsigmayz_dz = value_dsigmayz_dz / K_z[k] + memory_dsigmayz_dz[ijk];
+
+					vy[ijk] = DELTAT_over_rho*(value_dsigmaxy_dx + value_dsigmayy_dy + value_dsigmayz_dz) + vy[ijk];
+				}
+			}
+		}
+
+		for (int k = 0; k < NZ - 1; k++) {
+			for (int j = 1; j < NY; j++) {
+				for (int i = 0; i < NX - 1; i++) {
+					int ijk = i + j*NX + k*NX*NY;
+					int right = ijk + 1;
+					int bottom = ijk - NX;
+					int front = ijk + NX*NY;
+
+					value_dsigmaxz_dx = (sigmaxz[right] - sigmaxz[ijk])*ONE_OVER_DELTAX;
+					value_dsigmayz_dy = (sigmayz[ijk] - sigmayz[bottom])*ONE_OVER_DELTAY;
+					value_dsigmazz_dz = (sigmazz[front] - sigmazz[ijk])*ONE_OVER_DELTAZ;
+
+					memory_dsigmaxz_dx[ijk] = b_x_half[i] * memory_dsigmaxz_dx[ijk] + a_x_half[i] * value_dsigmaxz_dx;
+					memory_dsigmayz_dy[ijk] = b_y[j] * memory_dsigmayz_dy[ijk] + a_y[j] * value_dsigmayz_dy;
+					memory_dsigmazz_dz[ijk] = b_z_half[k] * memory_dsigmazz_dz[ijk] + a_z_half[k] * value_dsigmazz_dz;
+
+					value_dsigmaxz_dx = value_dsigmaxz_dx / K_x_half[i] + memory_dsigmaxz_dx[ijk];
+					value_dsigmayz_dy = value_dsigmayz_dy / K_y[j] + memory_dsigmayz_dy[ijk];
+					value_dsigmazz_dz = value_dsigmazz_dz / K_z_half[k] + memory_dsigmazz_dz[ijk];
+
+					vz[ijk] = DELTAT_over_rho*(value_dsigmaxz_dx + value_dsigmayz_dy + value_dsigmazz_dz) + vz[ijk];
+				}
+			}
+		}
+
+		a = PI*PI*f0*f0;
+		t = float(it)*DELTAT;
+
+		source_term = -factor*2.0*a*(t - t0)*expf(-a*powf(t - t0, 2));
+
+		force_x = sinf(ANGLE_FORCE*DEGREES_TO_RADIANS)*source_term;
+		force_y = cosf(ANGLE_FORCE*DEGREES_TO_RADIANS)*source_term;
+
+		i = ISOURCE; j = JSOURCE;
+		vx[i + j*NX + k*NX*NY] = vx[i + j*NX + k*NX*NY] + force_x*DELTAT / rho;
+		vy[i + j*NX + k*NX*NY] = vy[i + j*NX + k*NX*NY] + force_y*DELTAT / rho;
+
+		for (int irec = 0; irec < NREC; irec++) {
+			int iit = it + irec*NSTEP;
+			int sx = ix_rec[irec]; int sy = iy_rec[irec];
+			int iss = sx + sy*NX + NZ*NY*NX;
+			sisvx[iit] = vx[iss];
+			sisvy[iit] = vy[iss];
+		}
+
+		for (int k = NPOINTS_PML; k < NZ - NPOINTS_PML; k++) {
+			for (int j = NPOINTS_PML; j < NY - NPOINTS_PML; j++) {
+				for (int i = NPOINTS_PML; i < NX - NPOINTS_PML; i++) {
+					int ijk = i + j*NX + k*NX*NY;
+					total_energy_kinetic = total_energy_kinetic + 0.5*rho*(powf(vx[ijk], 2) + powf(vy[ijk], 2) + powf(vz[ijk], 2));
+					epsilon_xx = (2.0*(lambda + mu)*sigmaxx[ijk] - lambda*sigmayy[ijk] - lambda*sigmazz[ijk]) / (2.0*mu*(3.0*lambda + 2.0*mu));
+					epsilon_yy = (2.0*(lambda + mu)*sigmayy[ijk] - lambda*sigmaxx[ijk] - lambda*sigmazz[ijk]) / (2.0*mu*(3.0*lambda + 2.0*mu));
+					epsilon_zz = (2.0*(lambda + mu)*sigmazz[ijk] - lambda*sigmaxx[ijk] - lambda*sigmayy[ijk]) / (2.0*mu*(3.0*lambda + 2.0*mu));
+					epsilon_xy = sigmaxy[ijk] / (2.0*mu);
+					epsilon_xz = sigmaxz[ijk] / (2.0*mu);
+					epsilon_yz = sigmayz[ijk] / (2.0*mu);
+
+					total_energy_potential = total_energy_potential + 0.5*(epsilon_xx*sigmaxx[ijk] + epsilon_yy*sigmayy[ijk] + epsilon_zz*sigmazz[ijk] + 2.0*epsilon_xy*sigmaxy[ijk] + 2.0*epsilon_xz*sigmaxz[ijk] + 2.0*epsilon_yz*sigmayz[ijk]);
+				}
+			}
+		}
+	}//iteration stop
+	return 0;
 }
+
