@@ -1,0 +1,241 @@
+#include "cuda.h"
+#include "conio.h"
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <assert.h>
+#include "book.h"
+//#include "cpu_anim.h"
+#include <fstream>
+#include <string>
+
+using namespace std;
+
+int main(void) {
+	int NX, NY, NZ;
+	NX = 101;
+	NY = 641;
+	NZ = 640;
+
+	int NPROC, NZ_LOCAL;
+	NPROC = 64;
+	NZ_LOCAL = NZ / NPROC;
+
+	float DELTAX, DELTAY, DELTAZ, ONE_OVER_DELTAX, ONE_OVER_DELTAY, ONE_OVER_DELTAZ;
+	DELTAX = 10.0; DELTAY = DELTAX; DELTAZ = DELTAX;
+	ONE_OVER_DELTAX = 1.0 / DELTAX;
+	ONE_OVER_DELTAY = ONE_OVER_DELTAX;
+	ONE_OVER_DELTAZ = ONE_OVER_DELTAX;
+
+	float cp, cs, rho, mu, lambda, lambdaplustwomu;
+	cp = 3300.0;
+	cs = cp / 1.732;
+	rho = 2800.0;
+	mu = rho*cs*cs;
+	lambda = rho*(cp*cp - 2.0*cs*cs);
+	lambdaplustwomu = rho*cp*cp;
+
+	int NSTEP = 2500;
+
+	float DELTAT = 1.6e-3;
+
+	float f0 = 7.0;
+	float t0 = 1.2 / f0;
+	float factor = 1.0e+7;
+
+	int NPOINTS_PML = 10;
+
+	int ISOURCE = NX - 2 * NPOINTS_PML - 1;
+	int JSOURCE = 2 * NY / 3 + 1;
+	float xsource = float(ISOURCE - 1)*DELTAX;
+	float ysource = float(JSOURCE - 1)*DELTAY;
+
+	int NREC = 2;
+
+	float xdeb = xsource - 100;
+	float ydeb = 2300.0;
+	float xfin = xsource;
+	float yfin = 300;
+
+	int IT_DISPLAY = 100;
+
+	float PI = 3.141592653589793238462643;
+
+	float ANGLE_FORCE = 135.0;
+	float DEGREES_TO_RADIANS = PI / 180.0;
+	float ZERO = 0.0;
+	float HUGEVAL = 1.0e+30;
+	float STABILITY_THRESHOLD = 1.0e+25;
+	float NPOWER = 2.0;
+
+	float K_MAX_PML = 1.0;
+	float ALPHA_MAX_PML = 2.0*PI*(f0 / 2.0);
+
+	float *memory_dvx_dx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dvx_dy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dvx_dz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dvy_dx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dvy_dy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dvy_dz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dvz_dx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dvz_dy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dvz_dz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+
+	float *memory_dsigmaxx_dx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dsigmayy_dy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dsigmazz_dz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dsigmaxy_dx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dsigmaxy_dy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dsigmaxz_dx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dsigmaxz_dz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dsigmayz_dy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dsigmayz_dz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+
+	float value_dvx_dx, value_dvx_dy, value_dvx_dz, value_dvy_dx, value_dvy_dy, value_dvy_dz, value_dvz_dx, value_dvz_dy, value_dvz_dz;
+	float value_dsigmaxx_dx, value_dsigmayy_dy, value_dsigmazz_dz, value_dsigmaxy_dx, value_dsigmaxy_dy, value_dsigmaxz_dx, value_dsigmaxz_dz, value_dsigmayz_dy, value_dsigmayz_dz;
+
+	float *d_x = (float*)malloc(sizeof(float)*(NX));
+	float *K_x = (float*)malloc(sizeof(float)*(NX));
+	float *alpha_x = (float*)malloc(sizeof(float)*(NX));
+	float *a_x = (float*)malloc(sizeof(float)*(NX));
+	float *b_x = (float*)malloc(sizeof(float)*(NX));
+	float *d_x_half = (float*)malloc(sizeof(float)*(NX));
+	float *K_x_half = (float*)malloc(sizeof(float)*(NX));
+	float *alpha_x_half = (float*)malloc(sizeof(float)*(NX));
+	float *a_x_half = (float*)malloc(sizeof(float)*(NX));
+	float *b_x_half = (float*)malloc(sizeof(float)*(NX)); 
+	float *d_y = (float*)malloc(sizeof(float)*(NX));
+	float *K_y = (float*)malloc(sizeof(float)*(NX));
+	float *alpha_y = (float*)malloc(sizeof(float)*(NX));
+	float *a_y = (float*)malloc(sizeof(float)*(NX));
+	float *b_y = (float*)malloc(sizeof(float)*(NX));
+	float *d_y_half = (float*)malloc(sizeof(float)*(NX));
+	float *K_y_half = (float*)malloc(sizeof(float)*(NX));
+	float *alpha_y_half = (float*)malloc(sizeof(float)*(NX));
+	float *a_y_half = (float*)malloc(sizeof(float)*(NX));
+	float *b_y_half = (float*)malloc(sizeof(float)*(NX)); 
+	float *d_z = (float*)malloc(sizeof(float)*(NX));
+	float *K_z = (float*)malloc(sizeof(float)*(NX));
+	float *alpha_z = (float*)malloc(sizeof(float)*(NX));
+	float *a_z = (float*)malloc(sizeof(float)*(NX));
+	float *b_z = (float*)malloc(sizeof(float)*(NX));
+	float *d_z_half = (float*)malloc(sizeof(float)*(NX));
+	float *K_z_half = (float*)malloc(sizeof(float)*(NX));
+	float *alpha_z_half = (float*)malloc(sizeof(float)*(NX));
+	float *a_z_half = (float*)malloc(sizeof(float)*(NX));
+	float *b_x_half = (float*)malloc(sizeof(float)*(NX));
+
+	float thickness_PML_x, thickness_PML_y, thickness_PML_z;
+	float xoriginleft, xoriginright, yoriginbottom, yorigintop, zorigintop, zoriginbottom;
+	float Rcoef, d0_x, d0_y, d0_z, xval, yval, zval, abscissa_in_PML, abscissa_normalized;
+
+	float *vx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *vy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *vz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *sigmaxx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *sigmayy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *sigmazz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *sigmaxy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *sigmaxz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *sigmayz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+
+	float a, t, force_x, force_y, source_term;
+
+	float xspacerec, yspacerec, distval, dist;
+	int *ix_rec = (int*)malloc(sizeof(int)*(NREC));
+	int *iy_rec = (int*)malloc(sizeof(int)*(NREC));
+	float *xrec = (float*)malloc(sizeof(float)*(NREC));
+	float *yrec = (float*)malloc(sizeof(float)*(NREC));
+	
+	float *sisvx = (float*)malloc(sizeof(float)*(NSTEP*NREC));
+	float *sisvy = (float*)malloc(sizeof(float)*(NSTEP*NREC));
+
+	float epsilon_xx, epsilon_yy, epsilon_zz, epsilon_xy, epsilon_xz, epsilon_yz;
+	float total_energy_kinetic, total_energy_potential;
+	float *total_energy = (float*)malloc(sizeof(float)*(NSTEP));
+
+	int irec;
+
+	float DELTAT_lambda = DELTAT*lambda;
+	float DELTAT_mu = DELTAT*mu;
+	float DELTAT_lambdaplus2mu = DELTAT*lambdaplustwomu;
+	float DELTAT_over_rho = DELTAT / rho;
+
+	int i, j, k, it;
+	float Vsolidnorm, Courant_number;
+
+	char datein[80], timein[80], zone[80];
+	int time_values[8];
+	int ihours, iminutes, isecods, int_tCPU;
+	float time_start, time_end, tCPU;
+
+	char outputname[150];
+	int IOUT = 41;
+
+	thickness_PML_x = NPOINTS_PML*DELTAX; thickness_PML_y = NPOINTS_PML*DELTAY; thickness_PML_z = NPOINTS_PML*DELTAZ;
+	Rcoef = 1.0e-3;
+	d0_x = -(NPOWER + 1)*cp*log(Rcoef) / (2.0*thickness_PML_x);
+	d0_y = -(NPOWER + 1)*cp*log(Rcoef) / (2.0*thickness_PML_y);
+	d0_z = -(NPOWER + 1)*cp*log(Rcoef) / (2.0*thickness_PML_z);
+
+	for (int i = 0; i < NX; i++) {
+		d_x[i] = ZERO;
+		d_x_half[i] = ZERO;
+		K_x[i] = 1.0;
+		K_x_half[i] = 1.0;
+		alpha_x[i] = ZERO;
+		alpha_x_half[i] = ZERO;
+		a_x[i] = ZERO;
+		a_x_half[i] = ZERO;
+	}
+	for (int i = 0; i < NY; i++) {
+		d_y[i] = ZERO;
+		d_y_half[i] = ZERO;
+		K_y[i] = 1.0;
+		K_y_half[i] = 1.0;
+		alpha_y[i] = ZERO;
+		alpha_y_half[i] = ZERO;
+		a_y[i] = ZERO;
+		a_y_half[i] = ZERO;
+	}
+	for (int i = 0; i < NZ; i++) {
+		d_z[i] = ZERO;
+		d_z_half[i] = ZERO;
+		K_z[i] = 1.0;
+		K_z_half[i] = 1.0;
+		alpha_z[i] = ZERO;
+		alpha_z_half[i] = ZERO;
+		a_z[i] = ZERO;
+		a_z_half[i] = ZERO;
+	}
+
+	for (int i = 0; i < NX; i++) {
+		xval = DELTAX *float(i - 1);
+		
+		//xmin
+		abscissa_in_PML = xoriginleft - xval;
+		if (abscissa_in_PML >= ZERO) {
+			abscissa_normalized = abscissa_in_PML / thickness_PML_x;
+			d_x[i] = d0_x*pow(abscissa_normalized, NPOWER);
+			K_x[i] = 1.0 + (K_MAX_PML - 1.0)* pow(abscissa_normalized, NPOWER);
+			alpha_x[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
+		}
+		abscissa_in_PML = xoriginleft - (xval + DELTAX / 2.0);
+		if (abscissa_in_PML >= ZERO) {
+			abscissa_normalized = abscissa_in_PML / thickness_PML_x;
+			d_x_half[i] = d0_x * pow(abscissa_normalized, NPOWER);
+			K_x_half[i] = 1.0 + (K_MAX_PML - 1.0) * pow(abscissa_normalized, NPOWER);
+			alpha_x_half[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
+		}
+
+		//xmax
+		abscissa_in_PML = xval - xoriginright;
+		if (abscissa_in_PML >= ZERO) {
+			abscissa_normalized = abscissa_in_PML / thickness_PML_x;
+			d_x[i] = d0_x*pow(abscissa_normalized, NPOWER);
+			K_x[i] = 1 + (K_MAX_PML - 1.0)*pow(abscissa_normalized, NPOWER);
+			alpha_x[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
+		}
+		abscissa_in_PML = xval +
+	}
+}
