@@ -2,10 +2,16 @@
 //
 
 #include "stdafx.h"
+#include "stdio.h"
 #include "stdlib.h"
 #include "math.h"
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include "stdafx.h"
 
+using namespace std;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -399,7 +405,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	float *sxvz = (float*)malloc(sizeof(float)*(NY*NZ));
 	float *syvz = (float*)malloc(sizeof(float)*(NX*NZ));
 	float *szvz = (float*)malloc(sizeof(float)*(NX*NY));
-	
+
 	for (int k = 0; k < NZ; k++) {
 		for (int j = 0; j < NY; j++) {
 			int jk = j + k*NY;
@@ -637,40 +643,59 @@ int _tmain(int argc, _TCHAR* argv[])
 					szvz[ij] = vz[ijk];
 				}
 			}
-			char nmfile1[50], nmfile2[50], nmfile3[50];
-			sprintf(nmfile1, "sxvz%05i.sxvz", it);
-			sprintf(nmfile2, "syvz%05i.syvz", it);
-			sprintf(nmfile3, "szvz%05i.szvz", it);
+			char nmfile1[50]; char nmfile2[50]; char nmfile3[50];
+			sprintf_s(nmfile1, "sxvz%05i.sxvz", it);
+			sprintf_s(nmfile2, "syvz%05i.syvz", it);
+			sprintf_s(nmfile3, "szvz%05i.szvz", it);
+
 			//std::ofstream outvz(nmfile); // output, normal file
-			FILE* file1 = fopen(nmfile1, "wb");
-			FILE* file2 = fopen(nmfile2, "wb");
-			FILE* file3 = fopen(nmfile3, "wb");
-
-			for (int k = 0; k < NZ; k++) {
+			//FILE* file1 = fopen(nmfile1, "wb");
+			//FILE* file2 = fopen(nmfile2, "wb");
+			//FILE* file3 = fopen(nmfile3, "wb");
+			errno_t err;
+			FILE *file1, *file2, *file3;
+			err = fopen_s(&file1, nmfile1, "wb");
+			if (err == 0) {
+				printf("Capturing sxvz %05i", it);
+				for (int k = 0; k < NZ; k++) {
+					for (int j = 0; j < NY; j++) {
+						int jk = j + k*NY;
+						float f1 = sxvz[jk];
+						fwrite(&f1, sizeof(float), 1, file1);
+					}
+				}
+				fclose(file1);
+			}
+			err = fopen_s(&file2, nmfile2, "wb");
+			if (err == 0) {
+				printf("Capturing syvz %05i", it);
+				for (int k = 0; k < NZ; k++) {
+					for (int i = 0; i < NX; i++) {
+						int ik = i + k*NX;
+						float f2 = syvz[ik];
+						fwrite(&f2, sizeof(float), 1, file2);
+					}
+				}
+				fclose(file2);
+			}
+			err = fopen_s(&file3, nmfile3, "wb");
+			if (err == 0) {
+				printf("Capturing szvz %05i", it);
 				for (int j = 0; j < NY; j++) {
-					int jk = j + k*NY;
-					float f1 = sxvz[jk];
-					fwrite(&f1, sizeof(float), 1, file1);
+					for (int i = 0; i < NX; i++) {
+						int ij = i + j*NX;
+						float f3 = szvz[ij];
+						fwrite(&f3, sizeof(float), 1, file3);
+					}
 				}
-
-				for (int i = 0; i < NX; i++) {
-					int ik = i + k*NX;
-					float f2 = syvz[ik];
-					fwrite(&f2, sizeof(float), 1, file2);
-				}
-			} fclose(file1); fclose(file2);
-			for (int j = 0; j < NY; j++) {
-				for (int i = 0; i < NX; i++) {
-					int ij = i + j*NX;
-					float f3 = szvz[ij];
-					fwrite(&f3, sizeof(float), 1, file3);
-				}
-			}fclose(file3);
+				fclose(file3);
+			}
+			_fcloseall();
 		}
 	}//iteration stop
 
 	free(vx); free(vy); free(vz); free(sigmaxx); free(sigmayy); free(sigmazz);
-	free(sigmaxy); free(sigmaxz); free(sigmayz); 
+	free(sigmaxy); free(sigmaxz); free(sigmayz);
 	free(memory_dsigmaxx_dx); free(memory_dsigmaxy_dx); free(memory_dsigmaxz_dx);
 	free(memory_dsigmaxy_dy); free(memory_dsigmayy_dy); free(memory_dsigmayz_dy);
 	free(memory_dsigmaxz_dz); free(memory_dsigmayz_dz); free(memory_dsigmazz_dz);
@@ -679,3 +704,4 @@ int _tmain(int argc, _TCHAR* argv[])
 	free(memory_dvx_dz); free(memory_dvy_dz); free(memory_dvz_dz);
 	return 0;
 }
+
