@@ -32,7 +32,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	lambda = rho*(cp*cp - 2.0*cs*cs);
 	lambdaplustwomu = rho*cp*cp;
 
-	int NSTEP = 2500;
+	int NSTEP = 500;
 
 	float DELTAT = 1.6e-3;
 
@@ -68,25 +68,25 @@ int _tmain(int argc, _TCHAR* argv[])
 	float K_MAX_PML = 1.0;
 	float ALPHA_MAX_PML = 2.0*PI*(f0 / 2.0);
 
-	float *memory_dvx_dx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dvx_dy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dvx_dz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dvy_dx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dvy_dy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dvy_dz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dvz_dx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dvz_dy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dvz_dz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dvx_dx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dvx_dy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dvx_dz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dvy_dx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dvy_dy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dvy_dz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dvz_dx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dvz_dy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dvz_dz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
 
-	float *memory_dsigmaxx_dx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dsigmayy_dy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dsigmazz_dz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dsigmaxy_dx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dsigmaxy_dy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dsigmaxz_dx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dsigmaxz_dz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dsigmayz_dy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *memory_dsigmayz_dz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *memory_dsigmaxx_dx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dsigmayy_dy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dsigmazz_dz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dsigmaxy_dx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dsigmaxy_dy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dsigmaxz_dx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dsigmaxz_dz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dsigmayz_dy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dsigmayz_dz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
 
 	float value_dvx_dx, value_dvx_dy, value_dvx_dz, value_dvy_dx, value_dvy_dy, value_dvy_dz, value_dvz_dx, value_dvz_dy, value_dvz_dz;
 	float value_dsigmaxx_dx, value_dsigmayy_dy, value_dsigmazz_dz, value_dsigmaxy_dx, value_dsigmaxy_dy, value_dsigmaxz_dx, value_dsigmaxz_dz, value_dsigmayz_dy, value_dsigmayz_dz;
@@ -126,15 +126,15 @@ int _tmain(int argc, _TCHAR* argv[])
 	float xoriginleft, xoriginright, yoriginbottom, yorigintop, zorigintop, zoriginbottom;
 	float Rcoef, d0_x, d0_y, d0_z, xval, yval, zval, abscissa_in_PML, abscissa_normalized;
 
-	float *vx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *vy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *vz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *sigmaxx = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *sigmayy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *sigmazz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *sigmaxy = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *sigmaxz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
-	float *sigmayz = (float*)malloc(sizeof(float)*(NX, NY, NZ_LOCAL));
+	float *vx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *vy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *vz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *sigmaxx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *sigmayy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *sigmazz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *sigmaxy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *sigmaxz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *sigmayz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
 
 	float a, t, force_x, force_y, source_term;
 
@@ -253,7 +253,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	yoriginbottom = thickness_PML_y;
-	yorigintop - (NY - 1)*DELTAY - thickness_PML_x;
+	yorigintop = (NY - 1)*DELTAY - thickness_PML_x;
 	for (int i = 0; i < NY; i++) {
 		yval = DELTAY *float(i - 1);
 
@@ -296,7 +296,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	zoriginbottom = thickness_PML_z;
-	zorigintop - (NZ - 1)*DELTAZ - thickness_PML_z;
+	zorigintop = (NZ - 1)*DELTAZ - thickness_PML_z;
 	for (int i = 0; i < NZ; i++) {
 		zval = DELTAZ *float(i - 1);
 
@@ -394,6 +394,28 @@ int _tmain(int argc, _TCHAR* argv[])
 			sisvy[ij] = ZERO;
 		}
 		total_energy[i] = ZERO;
+	}
+
+	float *sxvz = (float*)malloc(sizeof(float)*(NY*NZ));
+	float *syvz = (float*)malloc(sizeof(float)*(NX*NZ));
+	float *szvz = (float*)malloc(sizeof(float)*(NX*NY));
+	
+	for (int k = 0; k < NZ; k++) {
+		for (int j = 0; j < NY; j++) {
+			int jk = j + k*NY;
+			sxvz[jk] = ZERO;
+		}
+
+		for (int i = 0; i < NX; i++) {
+			int ik = i + k*NX;
+			syvz[ik] = ZERO;
+		}
+	}
+	for (int j = 0; j < NY; j++) {
+		for (int i = 0; i < NX; i++) {
+			int ij = i + j*NX;
+			szvz[ij] = ZERO;
+		}
 	}
 
 	for (int it = 0; it < NSTEP; it++){
@@ -565,9 +587,9 @@ int _tmain(int argc, _TCHAR* argv[])
 		force_x = sinf(ANGLE_FORCE*DEGREES_TO_RADIANS)*source_term;
 		force_y = cosf(ANGLE_FORCE*DEGREES_TO_RADIANS)*source_term;
 
-		i = ISOURCE; j = JSOURCE;
-		vx[i + j*NX + k*NX*NY] = vx[i + j*NX + k*NX*NY] + force_x*DELTAT / rho;
-		vy[i + j*NX + k*NX*NY] = vy[i + j*NX + k*NX*NY] + force_y*DELTAT / rho;
+		int ijk = ISOURCE + JSOURCE*NX + 20 * NX*NY;
+		vx[ijk] = vx[ijk] + force_x*DELTAT / rho;
+		vy[ijk] = vy[ijk] + force_y*DELTAT / rho;
 
 		for (int irec = 0; irec < NREC; irec++) {
 			int iit = it + irec*NSTEP;
@@ -576,7 +598,8 @@ int _tmain(int argc, _TCHAR* argv[])
 			sisvx[iit] = vx[iss];
 			sisvy[iit] = vy[iss];
 		}
-
+		total_energy_kinetic = 0;
+		total_energy_potential = 0;
 		for (int k = NPOINTS_PML; k < NZ - NPOINTS_PML; k++) {
 			for (int j = NPOINTS_PML; j < NY - NPOINTS_PML; j++) {
 				for (int i = NPOINTS_PML; i < NX - NPOINTS_PML; i++) {
@@ -593,7 +616,66 @@ int _tmain(int argc, _TCHAR* argv[])
 				}
 			}
 		}
+		if ((it % 500) == 0) {
+			for (int k = 0; k < NZ; k++) {
+				for (int j = 0; j < NY; j++) {
+					int jk = j + k*NY;
+					int ijk = floorf(float(NX) / 2) + j*NX + k*NX*NY;
+					sxvz[jk] = vz[ijk];
+				}
+
+				for (int i = 0; i < NX; i++) {
+					int ik = i + k*NX;
+					int ijk = i + floorf(float(NX) / 2)*NX + k*NX*NY;
+					syvz[ik] = vz[ijk];
+				}
+			}
+			for (int j = 0; j < NY; j++) {
+				for (int i = 0; i < NX; i++) {
+					int ij = i + j*NX;
+					int ijk = i + j*NX + floorf(float(NZ) / 2)*NX*NY;
+					szvz[ij] = vz[ijk];
+				}
+			}
+			char nmfile1[50], nmfile2[50], nmfile3[50];
+			sprintf(nmfile1, "sxvz%05i.sxvz", it);
+			sprintf(nmfile2, "syvz%05i.syvz", it);
+			sprintf(nmfile3, "szvz%05i.szvz", it);
+			//std::ofstream outvz(nmfile); // output, normal file
+			FILE* file1 = fopen(nmfile1, "wb");
+			FILE* file2 = fopen(nmfile2, "wb");
+			FILE* file3 = fopen(nmfile3, "wb");
+
+			for (int k = 0; k < NZ; k++) {
+				for (int j = 0; j < NY; j++) {
+					int jk = j + k*NY;
+					float f1 = sxvz[jk];
+					fwrite(&f1, sizeof(float), 1, file1);
+				}
+
+				for (int i = 0; i < NX; i++) {
+					int ik = i + k*NX;
+					float f2 = syvz[ik];
+					fwrite(&f2, sizeof(float), 1, file2);
+				}
+			} fclose(file1); fclose(file2);
+			for (int j = 0; j < NY; j++) {
+				for (int i = 0; i < NX; i++) {
+					int ij = i + j*NX;
+					float f3 = szvz[ij];
+					fwrite(&f3, sizeof(float), 1, file3);
+				}
+			}fclose(file3);
+		}
 	}//iteration stop
+
+	free(vx); free(vy); free(vz); free(sigmaxx); free(sigmayy); free(sigmazz);
+	free(sigmaxy); free(sigmaxz); free(sigmayz); 
+	free(memory_dsigmaxx_dx); free(memory_dsigmaxy_dx); free(memory_dsigmaxz_dx);
+	free(memory_dsigmaxy_dy); free(memory_dsigmayy_dy); free(memory_dsigmayz_dy);
+	free(memory_dsigmaxz_dz); free(memory_dsigmayz_dz); free(memory_dsigmazz_dz);
+	free(memory_dvx_dx); free(memory_dvy_dx); free(memory_dvz_dx);
+	free(memory_dvx_dy); free(memory_dvy_dy); free(memory_dvz_dy);
+	free(memory_dvx_dz); free(memory_dvy_dz); free(memory_dvz_dz);
 	return 0;
 }
-
