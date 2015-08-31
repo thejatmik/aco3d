@@ -18,9 +18,6 @@ int main(void)
 	DIMX = NX;
 	DIMY = NY;
 	DIMZ = NZ;
-	int NPROC, NZ_LOCAL;
-	NPROC = 64;
-	NZ_LOCAL = NZ / NPROC;
 	float DELTAX, DELTAY, DELTAZ, ONE_OVER_DELTAX, ONE_OVER_DELTAY, ONE_OVER_DELTAZ;
 	DELTAX = 10.0; DELTAY = DELTAX; DELTAZ = DELTAX;
 	ONE_OVER_DELTAX = 1.0 / DELTAX;
@@ -41,16 +38,13 @@ int main(void)
 	int NPOINTS_PML = 10;
 	int ISOURCE = 50;
 	int JSOURCE = 50;
+	int KSOURCE = 50;
+	int NREC = 2;
 	float xsource = float(ISOURCE - 1)*DELTAX;
 	float ysource = float(JSOURCE - 1)*DELTAY;
-	int NREC = 2;
-	float xdeb = xsource - 100;
-	float ydeb = 2300.0;
-	float xfin = xsource;
-	float yfin = 300;
 	int IT_DISPLAY = 100;
 	float PI = 3.141592653589793238462643;
-	float ANGLE_FORCE = 90.0;
+	float ANGLE_FORCE = 135.0;
 	float DEGREES_TO_RADIANS = PI / 180.0;
 	float ZERO = 0.0;
 	float HUGEVAL = 1.0e+30;
@@ -138,12 +132,6 @@ int main(void)
 	float DELTAT_over_rho = DELTAT / rho;
 	int i, j, k, it;
 	float Vsolidnorm, Courant_number;
-	char datein[80], timein[80], zone[80];
-	int time_values[8];
-	int ihours, iminutes, isecods, int_tCPU;
-	float time_start, time_end, tCPU;
-	char outputname[150];
-	int IOUT = 41;
 	thickness_PML_x = NPOINTS_PML*DELTAX; thickness_PML_y = NPOINTS_PML*DELTAY; thickness_PML_z = NPOINTS_PML*DELTAZ;
 	Rcoef = 1.0e-3;
 	d0_x = -(NPOWER + 1)*cp*log(Rcoef) / (2.0*thickness_PML_x);
@@ -216,8 +204,8 @@ int main(void)
 		//for -5 at the end
 		if (alpha_x[i] < ZERO) { alpha_x[i] = ZERO; };
 		if (alpha_x_half[i] < ZERO) { alpha_x_half[i] = ZERO; }
-		b_x[i] = exp(-(d_x[i] / K_x[i] + alpha_x[i])*DELTAT);
-		b_x_half[i] = exp(-(d_x_half[i] / K_x_half[i] + alpha_x_half[i])*DELTAT);
+		b_x[i] = expf(-(d_x[i] / K_x[i] + alpha_x[i])*DELTAT);
+		b_x_half[i] = expf(-(d_x_half[i] / K_x_half[i] + alpha_x_half[i])*DELTAT);
 		//avoid divide by zero outside PML
 		if (fabs(d_x[i]) > 1.0e-6) { a_x[i] = d_x[i] * (b_x[i] - 1.0) / (K_x[i] * (d_x[i] + K_x[i] * alpha_x[i])); }
 		if (fabs(d_x_half[i]) > 1.0e-6) { a_x_half[i] = d_x_half[i] * (b_x_half[i] - 1.0) / (K_x_half[i] * (d_x_half[i] + K_x_half[i] * alpha_x_half[i])); }
@@ -256,8 +244,8 @@ int main(void)
 			K_y_half[i] = 1.0 + (K_MAX_PML - 1.0)*powf(abscissa_normalized, NPOWER);
 			alpha_y_half[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
 		}
-		b_y[i] = exp(-(d_y[i] / K_y[i] + alpha_y[i])*DELTAT);
-		b_y_half[i] = exp(-(d_y_half[i] / K_y_half[i] + alpha_y_half[i])*DELTAT);
+		b_y[i] = expf(-(d_y[i] / K_y[i] + alpha_y[i])*DELTAT);
+		b_y_half[i] = expf(-(d_y_half[i] / K_y_half[i] + alpha_y_half[i])*DELTAT);
 		//avoid division by zero outside PML
 		if (fabs(d_y[i]) > 1.0e-6) { a_y[i] = d_y[i] * (b_y[i] - 1.0) / (K_y[i] * (d_y[i] + K_y[i] * alpha_y[i])); }
 		if (fabs(d_y_half[i]) > 1.0e-6) { a_y_half[i] = d_y_half[i] * (b_y_half[i] - 1.0) / (K_y_half[i] * (d_y_half[i] + K_y_half[i] * alpha_y_half[i])); }
@@ -296,31 +284,13 @@ int main(void)
 			K_z_half[i] = 1.0 + (K_MAX_PML - 1.0)*powf(abscissa_normalized, NPOWER);
 			alpha_z_half[i] = ALPHA_MAX_PML*(1.0 - abscissa_normalized) + 0.1*ALPHA_MAX_PML;
 		}
-		b_z[i] = exp(-(d_z[i] / K_z[i] + alpha_z[i])*DELTAT);
-		b_z_half[i] = exp(-(d_z_half[i] / K_z_half[i] + alpha_z_half[i])*DELTAT);
+		b_z[i] = expf(-(d_z[i] / K_z[i] + alpha_z[i])*DELTAT);
+		b_z_half[i] = expf(-(d_z_half[i] / K_z_half[i] + alpha_z_half[i])*DELTAT);
 		//avoid division by zero outside PML
 		if (fabs(d_z[i]) > 1.0e-6) { a_z[i] = d_z[i] * (b_z[i] - 1.0) / (K_z[i] * (d_z[i] + K_z[i] * alpha_z[i])); }
 		if (fabs(d_z_half[i]) > 1.0e-6) { a_z_half[i] = d_z_half[i] * (b_z_half[i] - 1.0) / (K_z_half[i] * (d_z_half[i] + K_z_half[i] * alpha_z_half[i])); }
 	}
-	xspacerec = (xfin - xdeb) / float(NREC - 1);
-	yspacerec = (yfin - ydeb) / float(NREC - 1);
-	for (int i = 0; i < NREC; i++) {
-		xrec[i] = xdeb + float(i)*xspacerec;
-		yrec[i] = ydeb + float(i)*yspacerec;
-	}
-	for (int irec = 0; irec < NREC; irec++) {
-		dist = HUGEVAL;
-		for (int j = 0; j < NY; j++) {
-			for (int i = 0; i < NX; i++){
-				distval = sqrtf((DELTAX*float(i) - powf(xrec[irec], 2)) + (DELTAY*float(j) - powf(yrec[irec], 2)));
-				if (distval < dist) {
-					dist = distval;
-					ix_rec[irec] = i;
-					iy_rec[irec] = j;
-				}
-			}
-		}
-	}
+	
 	Courant_number = cp * DELTAT * sqrtf(1.0 / powf(DELTAX, 2) + 1.0 / powf(DELTAY, 2) + 1.0 / powf(DELTAZ, 2));
 	if (Courant_number > 1.0) { return 0; }
 	for (int k = 0; k < NZ; k++) {
@@ -376,13 +346,13 @@ int main(void)
 		}
 	}
 	for (int it = 0; it <= NSTEP; it++){
-		for (int k = 1; k < NZ-1; k++) {
-			for (int j = 1; j < NY-1; j++) {
+		for (int k = 1; k < NZ - 1; k++) {
+			for (int j = 1; j < NY - 1; j++) {
 				for (int i = 0; i < (NZ - 2); i++) {
 					int ijk = i + j*NX + k*NX*NY;
 					int right = ijk + 1;
 					int bottom = ijk - NX;
-					int rear = i + j*NX + (k-1)*NX*NY;
+					int rear = i + j*NX + (k - 1)*NX*NY;
 					value_dvx_dx = (vx[right] - vx[ijk])*ONE_OVER_DELTAX;
 					value_dvy_dy = (vy[ijk] - vy[bottom])*ONE_OVER_DELTAY;
 					value_dvz_dz = (vz[ijk] - vz[rear])*ONE_OVER_DELTAZ;
@@ -398,9 +368,9 @@ int main(void)
 				}
 			}
 		}
-		for (int k = 0; k < NZ-1; k++) {
+		for (int k = 0; k < NZ - 1; k++) {
 			for (int j = 0; j < NY - 2; j++){
-				for (int i = 1; i < NX-1; i++) {
+				for (int i = 1; i < NX - 1; i++) {
 					int ijk = i + j*NX + k*NY*NY;
 					int left = ijk - 1;
 					int top = ijk + NX;
@@ -415,8 +385,8 @@ int main(void)
 			}
 		}
 		for (int k = 0; k < NZ - 2; k++) {
-			for (int j = 0; j < NY-1; j++) {
-				for (int i = 1; i < NX-1; i++) {
+			for (int j = 0; j < NY - 1; j++) {
+				for (int i = 1; i < NX - 1; i++) {
 					int ijk = i + j*NX + k*NX*NY;
 					int left = ijk - 1;
 					int front = ijk + NX*NY;
@@ -430,7 +400,7 @@ int main(void)
 				}
 			}
 			for (int j = 0; j < NY - 2; j++) {
-				for (int i = 0; i < NX-1; i++) {
+				for (int i = 0; i < NX - 1; i++) {
 					int ijk = i + j*NX + k*NX*NY;
 					int top = ijk + NX;
 					int front = ijk + NX*NY;
@@ -444,9 +414,9 @@ int main(void)
 				}
 			}
 		}
-		for (int k = 1; k < NZ-1; k++) {
-			for (int j = 1; j < NY-1; j++) {
-				for (int i = 1; i < NX-1; i++) {
+		for (int k = 1; k < NZ - 1; k++) {
+			for (int j = 1; j < NY - 1; j++) {
+				for (int i = 1; i < NX - 1; i++) {
 					int ijk = i + j*NX + k*NX*NY;
 					int left = ijk - 1;
 					int bottom = ijk - NX;
@@ -483,7 +453,7 @@ int main(void)
 			}
 		}
 		for (int k = 0; k < NZ - 2; k++) {
-			for (int j = 1; j < NY-1; j++) {
+			for (int j = 1; j < NY - 1; j++) {
 				for (int i = 0; i < NX - 2; i++) {
 					int ijk = i + j*NX + k*NX*NY;
 					int right = ijk + 1;
@@ -507,17 +477,9 @@ int main(void)
 		source_term = -factor*2.0*a*(t - t0)*expf(-a*powf(t - t0, 2));
 		force_x = sinf(ANGLE_FORCE*DEGREES_TO_RADIANS)*source_term;
 		force_y = cosf(ANGLE_FORCE*DEGREES_TO_RADIANS)*source_term;
-		int ijk = ISOURCE + JSOURCE*NX + 50*NX*NY;
-		vx[ijk] = vx[ijk] + force_x*DELTAT / rho;
-		vy[ijk] = vy[ijk] + force_y*DELTAT / rho;
-		/*for (int irec = 0; irec < NREC; irec++) {
-			int iit = it + irec*NSTEP;
-			int sx = ix_rec[irec]; 
-			int sy = iy_rec[irec];
-			int iss = sx + sy*NX + 20*NY*NX;
-			sisvx[iit] = vx[iss];
-			sisvy[iit] = vy[iss];
-		}*/
+		int ijks = ISOURCE + JSOURCE*NX + KSOURCE * NX*NY;
+		vx[ijks] = vx[ijks] + force_x*DELTAT / rho;
+		vy[ijks] = vy[ijks] + force_y*DELTAT / rho;
 		total_energy_kinetic = 0;
 		total_energy_potential = 0;
 		for (int k = NPOINTS_PML; k < NZ - NPOINTS_PML; k++) {
@@ -535,24 +497,24 @@ int main(void)
 				}
 			}
 		}
-		if ((it % 500) == 0) {
-			for (int k = 0; k < NZ-1; k++) {
-				for (int j = 0; j < NY-1; j++) {
+		if ((it % IT_DISPLAY) == 0) {
+			for (int k = 0; k < NZ - 1; k++) {
+				for (int j = 0; j < NY - 1; j++) {
 					int jk = j + k*NY;
-					int ijk = ISOURCE + j*NX + k*NX*NY;
+					int ijk = ISOURCE + JSOURCE*NX + KSOURCE*NX*NY;
 					sxvz[jk] = vz[ijk];
 				}
 
-				for (int i = 0; i < NX-1; i++) {
+				for (int i = 0; i < NX - 1; i++) {
 					int ik = i + k*NX;
-					int ijk = i +JSOURCE*NX + k*NX*NY;
+					int ijk = ISOURCE + JSOURCE*NX + KSOURCE*NX*NY;
 					syvz[ik] = vz[ijk];
 				}
 			}
-			for (int j = 0; j < NY-1; j++) {
-				for (int i = 0; i < NX-1; i++) {
+			for (int j = 0; j < NY - 1; j++) {
+				for (int i = 0; i < NX - 1; i++) {
 					int ij = i + j*NX;
-					int ijk = i + j*NX + 50*NX*NY;
+					int ijk = ISOURCE + JSOURCE*NX + KSOURCE * NX*NY;
 					szvz[ij] = vz[ijk];
 				}
 			}
@@ -570,8 +532,8 @@ int main(void)
 			err = fopen_s(&file1, nmfile1, "wb");
 			if (err == 0) {
 				printf("Capturing sxvz %05i \n", it);
-				for (int k = 0; k < NZ-1; k++) {
-					for (int j = 0; j < NY-1; j++) {
+				for (int k = 0; k < NZ - 1; k++) {
+					for (int j = 0; j < NY - 1; j++) {
 						int jk = j + k*NY;
 						float f1 = sxvz[jk];
 						fwrite(&f1, sizeof(float), 1, file1);
@@ -582,8 +544,8 @@ int main(void)
 			err = fopen_s(&file2, nmfile2, "wb");
 			if (err == 0) {
 				printf("Capturing syvz %05i \n", it);
-				for (int k = 0; k < NZ-1; k++) {
-					for (int i = 0; i < NX-1; i++) {
+				for (int k = 0; k < NZ - 1; k++) {
+					for (int i = 0; i < NX - 1; i++) {
 						int ik = i + k*NX;
 						float f2 = syvz[ik];
 						fwrite(&f2, sizeof(float), 1, file2);
@@ -594,8 +556,8 @@ int main(void)
 			err = fopen_s(&file3, nmfile3, "wb");
 			if (err == 0) {
 				printf("Capturing szvz %05i \n", it);
-				for (int j = 0; j < NY-1; j++) {
-					for (int i = 0; i < NX-1; i++) {
+				for (int j = 0; j < NY - 1; j++) {
+					for (int i = 0; i < NX - 1; i++) {
 						int ij = i + j*NX;
 						float f3 = szvz[ij];
 						fwrite(&f3, sizeof(float), 1, file3);
