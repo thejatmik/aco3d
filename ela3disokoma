@@ -14,6 +14,10 @@ int main(void)
 	NX = 100;
 	NY = 100;
 	NZ = 100;
+	int DIMX, DIMY, DIMZ;
+	DIMX = NX;
+	DIMY = NY;
+	DIMZ = NZ;
 	int NPROC, NZ_LOCAL;
 	NPROC = 64;
 	NZ_LOCAL = NZ / NPROC;
@@ -29,7 +33,7 @@ int main(void)
 	mu = rho*cs*cs;
 	lambda = rho*(cp*cp - 2.0*cs*cs);
 	lambdaplustwomu = rho*cp*cp;
-	int NSTEP = 500;
+	int NSTEP = 5000;
 	float DELTAT = 1.0e-3;
 	float f0 = 7.0;
 	float t0 = 1.2 / f0;
@@ -54,68 +58,68 @@ int main(void)
 	float NPOWER = 2.0;
 	float K_MAX_PML = 1.0;
 	float ALPHA_MAX_PML = 2.0*PI*(f0 / 2.0);
-	float *memory_dvx_dx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dvx_dy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dvx_dz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dvy_dx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dvy_dy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dvy_dz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dvz_dx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dvz_dy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dvz_dz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dsigmaxx_dx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dsigmayy_dy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dsigmazz_dz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dsigmaxy_dx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dsigmaxy_dy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dsigmaxz_dx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dsigmaxz_dz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dsigmayz_dy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *memory_dsigmayz_dz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *memory_dvx_dx = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dvx_dy = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dvx_dz = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dvy_dx = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dvy_dy = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dvy_dz = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dvz_dx = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dvz_dy = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dvz_dz = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dsigmaxx_dx = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dsigmayy_dy = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dsigmazz_dz = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dsigmaxy_dx = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dsigmaxy_dy = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dsigmaxz_dx = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dsigmaxz_dz = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dsigmayz_dy = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *memory_dsigmayz_dz = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
 	float value_dvx_dx, value_dvx_dy, value_dvx_dz, value_dvy_dx, value_dvy_dy, value_dvy_dz, value_dvz_dx, value_dvz_dy, value_dvz_dz;
 	float value_dsigmaxx_dx, value_dsigmayy_dy, value_dsigmazz_dz, value_dsigmaxy_dx, value_dsigmaxy_dy, value_dsigmaxz_dx, value_dsigmaxz_dz, value_dsigmayz_dy, value_dsigmayz_dz;
-	float *d_x = (float*)malloc(sizeof(float)*(NX));
-	float *K_x = (float*)malloc(sizeof(float)*(NX));
-	float *alpha_x = (float*)malloc(sizeof(float)*(NX));
-	float *a_x = (float*)malloc(sizeof(float)*(NX));
-	float *b_x = (float*)malloc(sizeof(float)*(NX));
-	float *d_x_half = (float*)malloc(sizeof(float)*(NX));
-	float *K_x_half = (float*)malloc(sizeof(float)*(NX));
-	float *alpha_x_half = (float*)malloc(sizeof(float)*(NX));
-	float *a_x_half = (float*)malloc(sizeof(float)*(NX));
-	float *b_x_half = (float*)malloc(sizeof(float)*(NX));
-	float *d_y = (float*)malloc(sizeof(float)*(NX));
-	float *K_y = (float*)malloc(sizeof(float)*(NX));
-	float *alpha_y = (float*)malloc(sizeof(float)*(NX));
-	float *a_y = (float*)malloc(sizeof(float)*(NX));
-	float *b_y = (float*)malloc(sizeof(float)*(NX));
-	float *d_y_half = (float*)malloc(sizeof(float)*(NX));
-	float *K_y_half = (float*)malloc(sizeof(float)*(NX));
-	float *alpha_y_half = (float*)malloc(sizeof(float)*(NX));
-	float *a_y_half = (float*)malloc(sizeof(float)*(NX));
-	float *b_y_half = (float*)malloc(sizeof(float)*(NX));
-	float *d_z = (float*)malloc(sizeof(float)*(NX));
-	float *K_z = (float*)malloc(sizeof(float)*(NX));
-	float *alpha_z = (float*)malloc(sizeof(float)*(NX));
-	float *a_z = (float*)malloc(sizeof(float)*(NX));
-	float *b_z = (float*)malloc(sizeof(float)*(NX));
-	float *d_z_half = (float*)malloc(sizeof(float)*(NX));
-	float *K_z_half = (float*)malloc(sizeof(float)*(NX));
-	float *alpha_z_half = (float*)malloc(sizeof(float)*(NX));
-	float *a_z_half = (float*)malloc(sizeof(float)*(NX));
-	float *b_z_half = (float*)malloc(sizeof(float)*(NX));
+	float *d_x = (float*)malloc(sizeof(float)*(DIMX));
+	float *K_x = (float*)malloc(sizeof(float)*(DIMX));
+	float *alpha_x = (float*)malloc(sizeof(float)*(DIMX));
+	float *a_x = (float*)malloc(sizeof(float)*(DIMX));
+	float *b_x = (float*)malloc(sizeof(float)*(DIMX));
+	float *d_x_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *K_x_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *alpha_x_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *a_x_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *b_x_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *d_y = (float*)malloc(sizeof(float)*(DIMX));
+	float *K_y = (float*)malloc(sizeof(float)*(DIMX));
+	float *alpha_y = (float*)malloc(sizeof(float)*(DIMX));
+	float *a_y = (float*)malloc(sizeof(float)*(DIMX));
+	float *b_y = (float*)malloc(sizeof(float)*(DIMX));
+	float *d_y_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *K_y_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *alpha_y_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *a_y_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *b_y_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *d_z = (float*)malloc(sizeof(float)*(DIMX));
+	float *K_z = (float*)malloc(sizeof(float)*(DIMX));
+	float *alpha_z = (float*)malloc(sizeof(float)*(DIMX));
+	float *a_z = (float*)malloc(sizeof(float)*(DIMX));
+	float *b_z = (float*)malloc(sizeof(float)*(DIMX));
+	float *d_z_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *K_z_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *alpha_z_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *a_z_half = (float*)malloc(sizeof(float)*(DIMX));
+	float *b_z_half = (float*)malloc(sizeof(float)*(DIMX));
 	float thickness_PML_x, thickness_PML_y, thickness_PML_z;
 	float xoriginleft, xoriginright, yoriginbottom, yorigintop, zorigintop, zoriginbottom;
 	float Rcoef, d0_x, d0_y, d0_z, xval, yval, zval, abscissa_in_PML, abscissa_normalized;
-	float *vx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *vy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *vz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *sigmaxx = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *sigmayy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *sigmazz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *sigmaxy = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *sigmaxz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
-	float *sigmayz = (float*)malloc(sizeof(float)*(NX*NY*NZ));
+	float *vx = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *vy = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *vz = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *sigmaxx = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *sigmayy = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *sigmazz = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *sigmaxy = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *sigmaxz = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
+	float *sigmayz = (float*)malloc(sizeof(float)*(DIMX*DIMY*DIMZ));
 	float a, t, force_x, force_y, source_term;
 	float xspacerec, yspacerec, distval, dist;
 	int *ix_rec = (int*)malloc(sizeof(int)*(NREC));
@@ -352,9 +356,9 @@ int main(void)
 		}
 		total_energy[i] = ZERO;
 	}
-	float *sxvz = (float*)malloc(sizeof(float)*(NY*NZ));
-	float *syvz = (float*)malloc(sizeof(float)*(NX*NZ));
-	float *szvz = (float*)malloc(sizeof(float)*(NX*NY));
+	float *sxvz = (float*)malloc(sizeof(float)*(DIMX*DIMZ));
+	float *syvz = (float*)malloc(sizeof(float)*(DIMX*DIMZ));
+	float *szvz = (float*)malloc(sizeof(float)*(DIMX*DIMY));
 	for (int k = 0; k < NZ; k++) {
 		for (int j = 0; j < NY; j++) {
 			int jk = j + k*NY;
@@ -372,9 +376,9 @@ int main(void)
 		}
 	}
 	for (int it = 0; it <= NSTEP; it++){
-		for (int k = 1; k < NZ; k++) {
-			for (int j = 1; j < NY; j++) {
-				for (int i = 0; i < (NZ - 1); i++) {
+		for (int k = 1; k < NZ-1; k++) {
+			for (int j = 1; j < NY-1; j++) {
+				for (int i = 0; i < (NZ - 2); i++) {
 					int ijk = i + j*NX + k*NX*NY;
 					int right = ijk + 1;
 					int bottom = ijk - NX;
@@ -394,9 +398,9 @@ int main(void)
 				}
 			}
 		}
-		for (int k = 0; k < NZ; k++) {
-			for (int j = 0; j < NY - 1; j++){
-				for (int i = 1; i < NX; i++) {
+		for (int k = 0; k < NZ-1; k++) {
+			for (int j = 0; j < NY - 2; j++){
+				for (int i = 1; i < NX-1; i++) {
 					int ijk = i + j*NX + k*NY*NY;
 					int left = ijk - 1;
 					int top = ijk + NX;
@@ -410,9 +414,9 @@ int main(void)
 				}
 			}
 		}
-		for (int k = 0; k < NZ - 1; k++) {
-			for (int j = 0; j < NY; j++) {
-				for (int i = 1; i < NX; i++) {
+		for (int k = 0; k < NZ - 2; k++) {
+			for (int j = 0; j < NY-1; j++) {
+				for (int i = 1; i < NX-1; i++) {
 					int ijk = i + j*NX + k*NX*NY;
 					int left = ijk - 1;
 					int front = ijk + NX*NY;
@@ -425,8 +429,8 @@ int main(void)
 					sigmaxz[ijk] = DELTAT_mu*(value_dvz_dx + value_dvx_dz) + sigmaxz[ijk];
 				}
 			}
-			for (int j = 0; j < NY - 1; j++) {
-				for (int i = 0; i < NX; i++) {
+			for (int j = 0; j < NY - 2; j++) {
+				for (int i = 0; i < NX-1; i++) {
 					int ijk = i + j*NX + k*NX*NY;
 					int top = ijk + NX;
 					int front = ijk + NX*NY;
@@ -440,9 +444,9 @@ int main(void)
 				}
 			}
 		}
-		for (int k = 1; k < NZ; k++) {
-			for (int j = 1; j < NY; j++) {
-				for (int i = 1; i < NX; i++) {
+		for (int k = 1; k < NZ-1; k++) {
+			for (int j = 1; j < NY-1; j++) {
+				for (int i = 1; i < NX-1; i++) {
 					int ijk = i + j*NX + k*NX*NY;
 					int left = ijk - 1;
 					int bottom = ijk - NX;
@@ -459,8 +463,8 @@ int main(void)
 					vx[ijk] = DELTAT_over_rho*(value_dsigmaxx_dx + value_dsigmaxy_dy + value_dsigmaxz_dz) + vx[ijk];
 				}
 			}
-			for (int j = 0; j < NY - 1; j++) {
-				for (int i = 0; i < NX - 1; i++) {
+			for (int j = 0; j < NY - 2; j++) {
+				for (int i = 0; i < NX - 2; i++) {
 					int ijk = i + j*NX + k*NX*NY;
 					int right = ijk + 1;
 					int top = ijk + NX;
@@ -478,9 +482,9 @@ int main(void)
 				}
 			}
 		}
-		for (int k = 0; k < NZ - 1; k++) {
-			for (int j = 1; j < NY; j++) {
-				for (int i = 0; i < NX - 1; i++) {
+		for (int k = 0; k < NZ - 2; k++) {
+			for (int j = 1; j < NY-1; j++) {
+				for (int i = 0; i < NX - 2; i++) {
 					int ijk = i + j*NX + k*NX*NY;
 					int right = ijk + 1;
 					int bottom = ijk - NX;
@@ -531,22 +535,22 @@ int main(void)
 				}
 			}
 		}
-		if ((it % 50) == 0) {
-			for (int k = 0; k < NZ; k++) {
-				for (int j = 0; j < NY; j++) {
+		if ((it % 500) == 0) {
+			for (int k = 0; k < NZ-1; k++) {
+				for (int j = 0; j < NY-1; j++) {
 					int jk = j + k*NY;
 					int ijk = ISOURCE + j*NX + k*NX*NY;
 					sxvz[jk] = vz[ijk];
 				}
 
-				for (int i = 0; i < NX; i++) {
+				for (int i = 0; i < NX-1; i++) {
 					int ik = i + k*NX;
 					int ijk = i +JSOURCE*NX + k*NX*NY;
 					syvz[ik] = vz[ijk];
 				}
 			}
-			for (int j = 0; j < NY; j++) {
-				for (int i = 0; i < NX; i++) {
+			for (int j = 0; j < NY-1; j++) {
+				for (int i = 0; i < NX-1; i++) {
 					int ij = i + j*NX;
 					int ijk = i + j*NX + 50*NX*NY;
 					szvz[ij] = vz[ijk];
@@ -566,8 +570,8 @@ int main(void)
 			err = fopen_s(&file1, nmfile1, "wb");
 			if (err == 0) {
 				printf("Capturing sxvz %05i \n", it);
-				for (int k = 0; k < NZ; k++) {
-					for (int j = 0; j < NY; j++) {
+				for (int k = 0; k < NZ-1; k++) {
+					for (int j = 0; j < NY-1; j++) {
 						int jk = j + k*NY;
 						float f1 = sxvz[jk];
 						fwrite(&f1, sizeof(float), 1, file1);
@@ -578,8 +582,8 @@ int main(void)
 			err = fopen_s(&file2, nmfile2, "wb");
 			if (err == 0) {
 				printf("Capturing syvz %05i \n", it);
-				for (int k = 0; k < NZ; k++) {
-					for (int i = 0; i < NX; i++) {
+				for (int k = 0; k < NZ-1; k++) {
+					for (int i = 0; i < NX-1; i++) {
 						int ik = i + k*NX;
 						float f2 = syvz[ik];
 						fwrite(&f2, sizeof(float), 1, file2);
@@ -590,8 +594,8 @@ int main(void)
 			err = fopen_s(&file3, nmfile3, "wb");
 			if (err == 0) {
 				printf("Capturing szvz %05i \n", it);
-				for (int j = 0; j < NY; j++) {
-					for (int i = 0; i < NX; i++) {
+				for (int j = 0; j < NY-1; j++) {
+					for (int i = 0; i < NX-1; i++) {
 						int ij = i + j*NX;
 						float f3 = szvz[ij];
 						fwrite(&f3, sizeof(float), 1, file3);
