@@ -29,14 +29,14 @@ int main(void)
 	mu = rho*cs*cs;
 	lambda = rho*(cp*cp - 2.0*cs*cs);
 	lambdaplustwomu = rho*cp*cp;
-	int NSTEP = 1000;
-	float DELTAT = 1.6e-3;
+	int NSTEP = 500;
+	float DELTAT = 1.0e-3;
 	float f0 = 7.0;
 	float t0 = 1.2 / f0;
 	float factor = 1.0e+7;
 	int NPOINTS_PML = 10;
-	int ISOURCE = NX - 2 * NPOINTS_PML - 1;
-	int JSOURCE = 2 * NY / 3 + 1;
+	int ISOURCE = 50;
+	int JSOURCE = 50;
 	float xsource = float(ISOURCE - 1)*DELTAX;
 	float ysource = float(JSOURCE - 1)*DELTAY;
 	int NREC = 2;
@@ -46,7 +46,7 @@ int main(void)
 	float yfin = 300;
 	int IT_DISPLAY = 100;
 	float PI = 3.141592653589793238462643;
-	float ANGLE_FORCE = 135.0;
+	float ANGLE_FORCE = 90.0;
 	float DEGREES_TO_RADIANS = PI / 180.0;
 	float ZERO = 0.0;
 	float HUGEVAL = 1.0e+30;
@@ -503,7 +503,7 @@ int main(void)
 		source_term = -factor*2.0*a*(t - t0)*expf(-a*powf(t - t0, 2));
 		force_x = sinf(ANGLE_FORCE*DEGREES_TO_RADIANS)*source_term;
 		force_y = cosf(ANGLE_FORCE*DEGREES_TO_RADIANS)*source_term;
-		int ijk = ISOURCE + JSOURCE*NX + 20 * NX*NY;
+		int ijk = ISOURCE + JSOURCE*NX + 50*NX*NY;
 		vx[ijk] = vx[ijk] + force_x*DELTAT / rho;
 		vy[ijk] = vy[ijk] + force_y*DELTAT / rho;
 		/*for (int irec = 0; irec < NREC; irec++) {
@@ -531,24 +531,24 @@ int main(void)
 				}
 			}
 		}
-		if (((it % 500) == 0) && (it>0)) {
+		if ((it % 50) == 0) {
 			for (int k = 0; k < NZ; k++) {
 				for (int j = 0; j < NY; j++) {
 					int jk = j + k*NY;
-					int ijk = floorf(float(NX) / 2) + j*NX + k*NX*NY;
+					int ijk = ISOURCE + j*NX + k*NX*NY;
 					sxvz[jk] = vz[ijk];
 				}
 
 				for (int i = 0; i < NX; i++) {
 					int ik = i + k*NX;
-					int ijk = i + floorf(float(NX) / 2)*NX + k*NX*NY;
+					int ijk = i +JSOURCE*NX + k*NX*NY;
 					syvz[ik] = vz[ijk];
 				}
 			}
 			for (int j = 0; j < NY; j++) {
 				for (int i = 0; i < NX; i++) {
 					int ij = i + j*NX;
-					int ijk = i + j*NX + floorf(float(NZ) / 2)*NX*NY;
+					int ijk = i + j*NX + 50*NX*NY;
 					szvz[ij] = vz[ijk];
 				}
 			}
@@ -565,7 +565,7 @@ int main(void)
 			FILE *file1, *file2, *file3;
 			err = fopen_s(&file1, nmfile1, "wb");
 			if (err == 0) {
-				printf("Capturing sxvz %05i", it);
+				printf("Capturing sxvz %05i \n", it);
 				for (int k = 0; k < NZ; k++) {
 					for (int j = 0; j < NY; j++) {
 						int jk = j + k*NY;
@@ -577,7 +577,7 @@ int main(void)
 			}
 			err = fopen_s(&file2, nmfile2, "wb");
 			if (err == 0) {
-				printf("Capturing syvz %05i", it);
+				printf("Capturing syvz %05i \n", it);
 				for (int k = 0; k < NZ; k++) {
 					for (int i = 0; i < NX; i++) {
 						int ik = i + k*NX;
@@ -589,7 +589,7 @@ int main(void)
 			}
 			err = fopen_s(&file3, nmfile3, "wb");
 			if (err == 0) {
-				printf("Capturing szvz %05i", it);
+				printf("Capturing szvz %05i \n", it);
 				for (int j = 0; j < NY; j++) {
 					for (int i = 0; i < NX; i++) {
 						int ij = i + j*NX;
